@@ -1,4 +1,8 @@
+# Set the Python Path
 import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+
 from dataclasses import dataclass
 
 import numpy as np
@@ -8,18 +12,20 @@ from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-from src.exception import CustomException
-from src.logger import logging
+from exception import CustomException
+from logger import logging
 import os
 
-from src.utils import save_object
+from utils import save_object
 
 
+# Define class to store pre processor object:
 @dataclass
 class DataTransformationConfig:
     preprocessor_obj_file_path = os.path.join('artifacts', 'preprocessor.pkl')
     
 
+# Create a class to make the pipeline to clean data:
 class DataTransformation:
     def __init__(self):
         self.data_transformation_config = DataTransformationConfig()
@@ -58,6 +64,7 @@ class DataTransformation:
             logging.info(f'Categorical columns: {categorical_columns}')
             logging.info(f'Numerical columns: {numerical_columns}')
             
+            # This function returns a scikit-learn object with all the steps to pre-process data.
             preprocessor = ColumnTransformer(
                 [
                     ('num_pipeline', num_pipeline, numerical_columns),
@@ -70,6 +77,7 @@ class DataTransformation:
         except Exception as e:
             raise CustomException(e, sys)
         
+    # This function allows us to clean the data using the object created before:
     
     def initiate_data_transformation(self, train_path, test_path):
         try:
@@ -98,11 +106,14 @@ class DataTransformation:
             input_feature_train_arr = preprocessing_obj.fit_transform(input_feature_train_df)
             input_feature_test_arr = preprocessing_obj.transform(input_feature_test_df)
             
+            
+            # Translates slice objects to concatenation along the second axis.
             train_arr = np.c_[input_feature_train_arr, np.array(target_feature_train_df)]
             test_arr = np.c_[input_feature_test_arr, np.array(target_feature_test_df)]
             
             logging.info(f"Saved preprocessing object.")
             
+            # Save the pre-processor fitted with data.
             save_object(
 
                 file_path = self.data_transformation_config.preprocessor_obj_file_path,
